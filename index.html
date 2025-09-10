@@ -1,0 +1,1573 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graph Algorithms Visualizer (DFS, BFS, Prim, Kruskal, Dijkstra)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --border: #374151;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    header {
+      padding: 16px 20px;
+      background: linear-gradient(180deg, #111827, #0b1224);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+    }
+    
+    .title .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 20px var(--accent);
+    }
+    
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    button, select {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    button.primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: #1e40af;
+    }
+    
+    button.good {
+      background: linear-gradient(135deg, #059669, #047857);
+      border-color: #065f46;
+    }
+    
+    button.warn {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: #92400e;
+    }
+    
+    button.ghost {
+      background: transparent;
+      border: 1px dashed var(--border);
+    }
+    
+    input[type="number"], input[type="range"] {
+      accent-color: var(--accent);
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    
+    .panel {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: auto auto;
+      gap: 16px;
+      padding: 16px;
+      min-height: calc(100vh - 120px);
+    }
+    
+    .sidebar {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    
+    #canvasWrap {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    
+    .output-section {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    @media (max-width: 1200px) {
+      .panel {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+      
+      .sidebar {
+        grid-column: 1;
+        grid-row: 1;
+      }
+      
+      #canvasWrap {
+        grid-column: 1;
+        grid-row: 2;
+      }
+      
+      .output-section {
+        grid-column: 1;
+        grid-row: 3;
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .sidebar, .output-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      height: fit-content;
+    }
+    
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .card:last-child {
+      margin-bottom: 0;
+    }
+    
+    .card h3 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    
+    .row:last-child {
+      margin-bottom: 0;
+    }
+    
+    #canvasWrap {
+      position: relative;
+      background: radial-gradient(1200px 800px at 40% -20%, rgba(96, 165, 250, 0.08), transparent 50%),
+                  radial-gradient(1000px 700px at 120% 120%, rgba(52, 211, 153, 0.07), transparent 40%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    
+    canvas {
+      display: block;
+      width: 100%;
+      height: 600px;
+      background: #0b1224;
+      border-radius: 8px;
+      border: 1px solid #1a1f2e;
+    }
+    
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--card);
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      background: var(--card);
+    }
+    
+    .output-canvas {
+      width: 100%;
+      height: 300px;
+      background: #0b1224;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    
+    .traversal-info {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .traversal-sequence {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--accent);
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    
+    .algorithm-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    
+    .stat-item {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .stat-value {
+      color: var(--text);
+      font-weight: 600;
+    }
+    
+    .footer {
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Step Log Styles */
+    #stepLog {
+      height: 200px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, rgba(11,18,36,0.6), rgba(11,18,36,0.3));
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    #stepLog .visit { color: var(--accent); }
+    #stepLog .edge { color: var(--warn); }
+    #stepLog .add { color: var(--good); }
+    #stepLog .reject { color: var(--bad); }
+    #stepLog .info { color: var(--muted); }
+    .log-controls { display:flex; gap:8px; margin-top:8px; }
+    .small { font-size: 11px; padding: 6px 8px; }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <span class="dot"></span>
+      <div>
+        Graph Algorithms Visualizer
+        <div class="subtitle">Interactive visualization of graph traversal and MST algorithms</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="btnDFS">DFS</button>
+      <button class="primary" id="btnBFS">BFS</button>
+      <button class="good" id="btnPrim">Prim</button>
+      <button class="good" id="btnKruskal">Kruskal</button>
+      <button class="warn" id="btnDijkstra">Dijkstra</button>
+      <button class="ghost" id="btnClearHighlights">Clear Highlights</button>
+      <button class="ghost" id="btnClearLog">Clear Log</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <aside class="sidebar">
+      <div class="card">
+        <h3>Configuration</h3>
+        <div class="row">
+          <label>Start Node:</label>
+          <span class="badge" id="startNodeLabel">0</span>
+          <span style="font-size: 11px; color: var(--muted);">(Click node to change)</span>
+        </div>
+        <div class="row">
+          <label>Animation Speed:</label>
+          <input id="speed" type="range" min="50" max="1500" value="400" style="flex: 1;" />
+          <span id="speedVal" class="badge">400ms</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Random Graph Generator</h3>
+        <div class="row">
+          <label>Nodes:</label>
+          <input id="rgNodes" type="number" min="3" max="20" value="8" style="width: 60px;" />
+        </div>
+        <div class="row">
+          <label>Edge Probability:</label>
+          <input id="rgProb" type="range" min="0" max="1" step="0.05" value="0.3" style="flex: 1;" />
+          <span id="rgProbVal" class="badge">0.30</span>
+        </div>
+        <div class="row">
+          <label>Weight Range:</label>
+          <input id="rgWmin" type="number" min="1" max="50" value="1" style="width: 50px;" />
+          <span style="color: var(--muted);">to</span>
+          <input id="rgWmax" type="number" min="1" max="99" value="20" style="width: 50px;" />
+        </div>
+        <div class="row">
+          <button id="btnRandom" class="primary">Generate</button>
+          <button id="btnResetLayout" class="ghost">Re-layout</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Legend</h3>
+        <div class="legend">
+          <span class="chip"><span class="dot" style="background: #60a5fa;"></span>Node</span>
+          <span class="chip"><span class="dot" style="background: #34d399;"></span>Selected</span>
+          <span class="chip"><span class="dot" style="background: #fbbf24;"></span>Exploring</span>
+          <span class="chip"><span class="dot" style="background: #f87171;"></span>Rejected</span>
+          <span class="chip"><span class="dot" style="background: orange;"></span>Active</span>
+        </div>
+      </div>
+
+      <div class="card" style="background: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.2);">
+        <div style="font-size: 12px; color: var(--muted);">
+          <strong>Tips:</strong> Drag nodes to adjust layout • Double-click canvas to toggle weights • Click any node to set as start
+        </div>
+      </div>
+    </aside>
+
+    <main id="canvasWrap">
+      <canvas id="canvas" width="1280" height="720"></canvas>
+    </main>
+
+    <div class="output-section">
+      <aside class="output-panel">
+        <div class="card">
+          <h3>Traversal Output</h3>
+          <canvas id="outputCanvas" class="output-canvas" width="600" height="400"></canvas>
+          <div class="traversal-info">
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">Sequence:</div>
+            <div class="traversal-sequence" id="traversalSequence">Click an algorithm to see traversal</div>
+            <div class="algorithm-stats" id="algorithmStats" style="display: none;">
+              <div class="stat-item">Nodes Visited: <span class="stat-value" id="nodesVisited">0</span></div>
+              <div class="stat-item">Edges Used: <span class="stat-value" id="edgesUsed">0</span></div>
+              <div class="stat-item">Total Weight: <span class="stat-value" id="totalWeight">0</span></div>
+              <div class="stat-item">Time Taken: <span class="stat-value" id="timeTaken">0ms</span></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="output-panel">
+        <div class="card">
+          <h3>Step-by-Step Log</h3>
+          <div id="stepLog"></div>
+          <div class="log-controls">
+            <button id="btnPause" class="small ghost">Pause (toggle)</button>
+            <button id="btnExportLog" class="small ghost">Export Log</button>
+            <div style="flex:1"></div>
+            <button id="btnClearLogSmall" class="small ghost">Clear Log</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="footer">
+    Interactive Graph Algorithms Visualizer • Built with HTML5 Canvas • Supports DFS, BFS, Prim's MST, Kruskal's MST, and Dijkstra's Algorithm
+  </div>
+
+  <script>
+    // ===== Utilities =====
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const random = (min, max) => Math.random() * (max - min) + min;
+    const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    // ===== Graph Data Structure =====
+    class Graph {
+      constructor() {
+        this.nodes = []; // {id, x, y}
+        this.edges = []; // {u, v, w}
+        this.showWeights = true;
+      }
+
+      addNode(x, y) {
+        const id = this.nodes.length;
+        this.nodes.push({ id, x, y });
+        return id;
+      }
+
+      addEdge(u, v, weight = 1) {
+        if (u === v) return;
+        if (this.edges.some(edge => 
+          (edge.u === u && edge.v === v) || (edge.u === v && edge.v === u)
+        )) return;
+        this.edges.push({ u, v, w: weight });
+      }
+
+      getNeighbors(nodeId) {
+        const neighbors = [];
+        for (const edge of this.edges) {
+          if (edge.u === nodeId) {
+            neighbors.push({ to: edge.v, weight: edge.w, edge });
+          } else if (edge.v === nodeId) {
+            neighbors.push({ to: edge.u, weight: edge.w, edge });
+          }
+        }
+        return neighbors;
+      }
+
+      constrainNodesToBounds() {
+        const margin = 40;
+        for (const node of this.nodes) {
+          node.x = clamp(node.x, margin, canvas.width - margin);
+          node.y = clamp(node.y, margin, canvas.height - margin);
+        }
+      }
+    }
+
+    // ===== Canvas Setup and Interaction =====
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const outputCanvas = document.getElementById('outputCanvas');
+    const outputCtx = outputCanvas.getContext('2d');
+    
+    let graph = new Graph();
+    let startNode = 0;
+    let draggedNode = null;
+    let hoveredNode = null;
+    let isRunning = false;
+    let currentTraversal = [];
+    let currentAlgorithm = '';
+    let startTime = 0;
+    let paused = false;
+
+    // UI Elements
+    const speedInput = document.getElementById('speed');
+    const speedValue = document.getElementById('speedVal');
+    const startNodeLabel = document.getElementById('startNodeLabel');
+    const traversalSequence = document.getElementById('traversalSequence');
+    const algorithmStats = document.getElementById('algorithmStats');
+
+    // Step log elements
+    const stepLog = document.getElementById('stepLog');
+    const btnClearLog = document.getElementById('btnClearLog');
+    const btnClearLogSmall = document.getElementById('btnClearLogSmall');
+    const btnPause = document.getElementById('btnPause');
+    const btnExportLog = document.getElementById('btnExportLog');
+
+    // Event Listeners
+    speedInput.addEventListener('input', () => {
+      speedValue.textContent = speedInput.value + 'ms';
+    });
+
+    btnClearLog.addEventListener('click', () => { clearLog(); });
+    btnClearLogSmall.addEventListener('click', () => { clearLog(); });
+    btnPause.addEventListener('click', () => { paused = !paused; btnPause.textContent = paused ? 'Paused' : 'Pause (toggle)'; });
+    btnExportLog.addEventListener('click', () => {
+      const text = Array.from(stepLog.children).map(ch => ch.textContent).join('\n');
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'graph-log.txt'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function getCanvasPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * (canvas.width / rect.width),
+        y: (event.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function getNodeAtPosition(position) {
+      for (const node of graph.nodes) {
+        if (distance(node, position) <= 20) {
+          return node.id;
+        }
+      }
+      return null;
+    }
+
+    canvas.addEventListener('mousedown', (event) => {
+      const position = getCanvasPosition(event);
+      const nodeId = getNodeAtPosition(position);
+      if (nodeId !== null) {
+        draggedNode = nodeId;
+      }
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+      const position = getCanvasPosition(event);
+      hoveredNode = getNodeAtPosition(position);
+      
+      if (draggedNode !== null) {
+        const node = graph.nodes[draggedNode];
+        node.x = position.x;
+        node.y = position.y;
+        graph.constrainNodesToBounds();
+        draw();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      draggedNode = null;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      draggedNode = null;
+    });
+
+    canvas.addEventListener('click', (event) => {
+      const nodeId = getNodeAtPosition(getCanvasPosition(event));
+      if (nodeId !== null) {
+        startNode = nodeId;
+        updateStartNodeLabel();
+        draw();
+        logStep(`Start node set to ${startNode}`, 'info');
+      }
+    });
+
+    canvas.addEventListener('dblclick', () => {
+      graph.showWeights = !graph.showWeights;
+      draw();
+      logStep(`Toggled weight display: ${graph.showWeights ? 'ON' : 'OFF'}`, 'info');
+    });
+
+    function updateStartNodeLabel() {
+      startNodeLabel.textContent = startNode.toString();
+    }
+
+    // ===== Drawing Functions =====
+    const theme = {
+      bg: '#0b1224',
+      grid: '#1b2236',
+      edge: '#93a4bf',
+      edgeDim: 'rgba(147, 164, 191, 0.25)',
+      node: '#60a5fa',
+      nodeStroke: '#172033',
+      active: 'orange',
+      frontier: '#fbbf24',
+      good: '#34d399',
+      bad: '#f87171',
+      text: '#e5e7eb',
+      muted: '#a7b0c2'
+    };
+
+    function drawGrid() {
+      const gridSize = 40;
+      ctx.save();
+      ctx.strokeStyle = theme.grid;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+      }
+      
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+      }
+      
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawEdge(nodeA, nodeB, color, width = 2, dashPattern = null) {
+      ctx.save();
+      ctx.beginPath();
+      
+      if (dashPattern) {
+        ctx.setLineDash(dashPattern);
+      } else {
+        ctx.setLineDash([]);
+      }
+      
+      ctx.moveTo(nodeA.x, nodeA.y);
+      ctx.lineTo(nodeB.x, nodeB.y);
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawWeight(nodeA, nodeB, weight, color) {
+      if (!graph.showWeights) return;
+      
+      const midX = (nodeA.x + nodeB.x) / 2;
+      const midY = (nodeA.y + nodeB.y) / 2;
+      
+      ctx.save();
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      
+      const text = weight.toString();
+      ctx.font = '12px system-ui';
+      const textWidth = ctx.measureText(text).width;
+      const padding = 4;
+      
+      if (!CanvasRenderingContext2D.prototype.roundRect) {
+        // fallback rectangle
+        ctx.beginPath();
+        ctx.rect(midX - textWidth / 2 - padding, midY - 10, textWidth + 2 * padding, 16);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(midX - textWidth / 2 - padding, midY - 10, textWidth + 2 * padding, 16, 8);
+        ctx.fill();
+        ctx.stroke();
+      }
+      
+      ctx.fillStyle = color || theme.text;
+      ctx.fillText(text, midX - textWidth / 2, midY + 2);
+      ctx.restore();
+    }
+
+    function drawNode(node, color, radius = 18) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = theme.nodeStroke;
+      ctx.stroke();
+      
+      ctx.fillStyle = '#0b1224';
+      ctx.font = 'bold 13px system-ui';
+      const text = node.id.toString();
+      const textWidth = ctx.measureText(text).width;
+      ctx.fillText(text, node.x - textWidth / 2, node.y + 4);
+      ctx.restore();
+    }
+
+    function draw(highlights = {}) {
+      const {
+        activeNode = null,
+        visited = new Set(),
+        frontierEdges = new Set(),
+        goodEdges = new Set(),
+        badEdges = new Set()
+      } = highlights;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw grid background
+      drawGrid();
+      
+      // Draw edges
+      for (const edge of graph.edges) {
+        const nodeA = graph.nodes[edge.u];
+        const nodeB = graph.nodes[edge.v];
+        
+        let color = theme.edgeDim;
+        let width = 2;
+        let dashPattern = null;
+        
+        if (containsEdgeSet(goodEdges, edge)) {
+          color = theme.good;
+          width = 4;
+        } else if (containsEdgeSet(frontierEdges, edge)) {
+          color = theme.frontier;
+          width = 3;
+          dashPattern = [8, 8];
+        } else if (containsEdgeSet(badEdges, edge)) {
+          color = theme.bad;
+          width = 3;
+        }
+        
+        drawEdge(nodeA, nodeB, color, width, dashPattern);
+        
+        const weightColor = (containsEdgeSet(goodEdges, edge) || containsEdgeSet(frontierEdges, edge) || containsEdgeSet(badEdges, edge)) 
+          ? color : theme.muted;
+        drawWeight(nodeA, nodeB, edge.w, weightColor);
+      }
+      
+      // Draw nodes
+      for (const node of graph.nodes) {
+        let color = theme.node;
+        
+        if (visited.has(node.id)) {
+          color = '#8ab8ff';
+        }
+        if (activeNode === node.id) {
+          color = theme.active;
+        }
+        
+        drawNode(node, color);
+      }
+      
+      // Draw hover effect
+      if (hoveredNode !== null) {
+        const node = graph.nodes[hoveredNode];
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 24, 0, Math.PI * 2);
+        ctx.strokeStyle = '#64748b';
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function containsEdgeSet(setLike, edge) {
+      // supports Set of objects or Set of string keys
+      if (!setLike) return false;
+      if (setLike.has(edge)) return true;
+      // fallback: compare by u-v pairs
+      for (const it of setLike) {
+        if (typeof it === 'string') {
+          if (it === edgeKey(edge)) return true;
+        } else {
+          if (it.u === edge.u && it.v === edge.v && it.w === edge.w) return true;
+          if (it.u === edge.v && it.v === edge.u && it.w === edge.w) return true;
+        }
+      }
+      return false;
+    }
+
+    function edgeKey(edge) {
+      const a = Math.min(edge.u, edge.v);
+      const b = Math.max(edge.u, edge.v);
+      return `${a}-${b}-${edge.w}`;
+    }
+
+    // ===== Traversal Output Canvas =====
+    function updateTraversalOutput() {
+      outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+      
+      if (currentTraversal.length === 0) return;
+      
+      const padding = 20;
+      const nodeRadius = 15;
+      const arrowLength = 30;
+      const spacing = nodeRadius * 2 + arrowLength;
+      
+      const maxNodesPerRow = Math.floor((outputCanvas.width - 2 * padding) / spacing) || 1;
+      const rows = Math.ceil(currentTraversal.length / maxNodesPerRow);
+      const rowHeight = nodeRadius * 2 + 40;
+      
+      outputCtx.save();
+      outputCtx.font = '12px system-ui';
+      outputCtx.textAlign = 'center';
+      
+      for (let i = 0; i < currentTraversal.length; i++) {
+        const nodeId = currentTraversal[i];
+        const row = Math.floor(i / maxNodesPerRow);
+        const col = i % maxNodesPerRow;
+        
+        const x = padding + col * spacing + nodeRadius;
+        const y = padding + row * rowHeight + nodeRadius;
+        
+        // Draw node
+        outputCtx.beginPath();
+        outputCtx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+        outputCtx.fillStyle = i === currentTraversal.length - 1 ? theme.active : theme.good;
+        outputCtx.fill();
+        outputCtx.strokeStyle = theme.nodeStroke;
+        outputCtx.lineWidth = 2;
+        outputCtx.stroke();
+        
+        // Draw node label
+        outputCtx.fillStyle = theme.nodeStroke;
+        outputCtx.fillText(nodeId.toString(), x, y + 4);
+        
+        // Draw arrow to next node
+        if (i < currentTraversal.length - 1 && col < maxNodesPerRow - 1) {
+          const arrowX = x + nodeRadius + 5;
+          const arrowEndX = arrowX + arrowLength - 10;
+          
+          outputCtx.strokeStyle = theme.muted;
+          outputCtx.lineWidth = 2;
+          outputCtx.beginPath();
+          outputCtx.moveTo(arrowX, y);
+          outputCtx.lineTo(arrowEndX, y);
+          
+          // Arrow head
+          outputCtx.moveTo(arrowEndX - 5, y - 3);
+          outputCtx.lineTo(arrowEndX, y);
+          outputCtx.lineTo(arrowEndX - 5, y + 3);
+          outputCtx.stroke();
+        }
+        
+        // Draw down arrow for row transition
+        if (col === maxNodesPerRow - 1 && i < currentTraversal.length - 1) {
+          const arrowY = y + nodeRadius + 5;
+          const arrowEndY = arrowY + 15;
+          
+          outputCtx.strokeStyle = theme.muted;
+          outputCtx.beginPath();
+          outputCtx.moveTo(x, arrowY);
+          outputCtx.lineTo(x, arrowEndY);
+          
+          // Arrow head
+          outputCtx.moveTo(x - 3, arrowEndY - 5);
+          outputCtx.lineTo(x, arrowEndY);
+          outputCtx.lineTo(x + 3, arrowEndY - 5);
+          outputCtx.stroke();
+        }
+      }
+      
+      outputCtx.restore();
+    }
+
+    function updateTraversalInfo(sequence, stats = {}) {
+      traversalSequence.textContent = sequence;
+      
+      if (Object.keys(stats).length > 0) {
+        document.getElementById('nodesVisited').textContent = stats.nodesVisited || 0;
+        document.getElementById('edgesUsed').textContent = stats.edgesUsed || 0;
+        document.getElementById('totalWeight').textContent = stats.totalWeight || 0;
+        document.getElementById('timeTaken').textContent = stats.timeTaken || 0;
+        algorithmStats.style.display = 'grid';
+      } else {
+        algorithmStats.style.display = 'none';
+      }
+    }
+
+    // ===== Step Log Functions =====
+    function logStep(message, type = 'info') {
+      // type: 'visit', 'edge', 'add', 'reject', 'info'
+      const el = document.createElement('div');
+      el.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      el.classList.add(type);
+      stepLog.appendChild(el);
+      // limit log size
+      while (stepLog.children.length > 600) stepLog.removeChild(stepLog.firstChild);
+      stepLog.scrollTop = stepLog.scrollHeight;
+      // small pause if paused toggle is set
+    }
+
+    function clearLog() {
+      stepLog.innerHTML = '';
+    }
+
+    // ===== Algorithm Helper Functions =====
+    function getAnimationDelay() {
+      // delay respects pause toggle
+      return new Promise(async (resolve) => {
+        let remaining = parseInt(speedInput.value);
+        while (remaining > 0) {
+          if (!paused) {
+            const chunk = Math.min(50, remaining);
+            await sleep(chunk);
+            remaining -= chunk;
+          } else {
+            await sleep(150);
+          }
+        }
+        resolve();
+      });
+    }
+
+    function createGuardedAlgorithm(algorithmFunction) {
+      return async (...args) => {
+        if (isRunning) return;
+        
+        isRunning = true;
+        currentTraversal = [];
+        startTime = Date.now();
+        clearHighlights();
+        clearLog();
+        try {
+          await algorithmFunction(...args);
+        } catch (err) {
+          console.error('Algorithm error:', err);
+          logStep('Error: ' + err.message, 'reject');
+        } finally {
+          isRunning = false;
+        }
+      };
+    }
+
+    function clearHighlights() {
+      draw();
+      currentTraversal = [];
+      updateTraversalOutput();
+    }
+
+    function formatEdge(e) {
+      return `${e.u}→${e.v}(${e.w})`;
+    }
+
+    // ===== Algorithm Implementations =====
+
+    // Depth-First Search
+    const runDFS = createGuardedAlgorithm(async () => {
+      currentAlgorithm = 'DFS';
+      logStep(`Starting DFS from node ${startNode}`, 'info');
+      const visited = new Set();
+      let sequence = [];
+
+      async function dfs(nodeId, parent = null) {
+        logStep(`Visit node ${nodeId}`, 'visit');
+        visited.add(nodeId);
+        currentTraversal.push(nodeId);
+        sequence.push(nodeId.toString());
+        draw({ activeNode: nodeId, visited });
+        updateTraversalOutput();
+        await getAnimationDelay();
+        
+        for (const { to, edge } of graph.getNeighbors(nodeId)) {
+          if (visited.has(to)) {
+            logStep(`Neighbor ${to} already visited – skipping`, 'info');
+            continue;
+          }
+          
+          logStep(`Exploring edge ${formatEdge(edge)}`, 'edge');
+          draw({ activeNode: nodeId, visited, frontierEdges: new Set([edge]) });
+          await getAnimationDelay();
+          
+          await dfs(to, nodeId);
+          
+          logStep(`Returned to node ${nodeId} from ${to}`, 'info');
+          draw({ activeNode: nodeId, visited, goodEdges: new Set([edge]) });
+          await getAnimationDelay();
+        }
+      }
+
+      await dfs(startNode);
+      
+      const timeTaken = Date.now() - startTime;
+      updateTraversalInfo(sequence.join(' →'), {
+        nodesVisited: visited.size,
+        edgesUsed: Math.max(0, visited.size - 1),
+        totalWeight: 'N/A',
+        timeTaken: timeTaken + 'ms'
+      });
+      
+      draw({ visited });
+      logStep(`DFS complete – visited ${visited.size} nodes`, 'info');
+    });
+
+    // Breadth-First Search
+    const runBFS = createGuardedAlgorithm(async () => {
+      currentAlgorithm = 'BFS';
+      logStep(`Starting BFS from node ${startNode}`, 'info');
+      const visited = new Set();
+      const queue = [startNode];
+      let sequence = [];
+
+      while (queue.length > 0) {
+        const nodeId = queue.shift();
+        
+        if (visited.has(nodeId)) {
+          logStep(`Node ${nodeId} already visited – skipping`, 'info');
+          continue;
+        }
+        
+        logStep(`Dequeue node ${nodeId} – visiting`, 'visit');
+        draw({ activeNode: nodeId, visited });
+        await getAnimationDelay();
+        
+        visited.add(nodeId);
+        currentTraversal.push(nodeId);
+        sequence.push(nodeId.toString());
+        
+        draw({ activeNode: nodeId, visited });
+        updateTraversalOutput();
+        await getAnimationDelay();
+        
+        for (const { to, edge } of graph.getNeighbors(nodeId)) {
+          if (!visited.has(to)) {
+            logStep(`Found neighbor ${to} via edge ${formatEdge(edge)} – enqueue`, 'edge');
+            draw({ activeNode: nodeId, visited, frontierEdges: new Set([edge]) });
+            await getAnimationDelay();
+            queue.push(to);
+          } else {
+            logStep(`Neighbor ${to} already visited – ignore`, 'info');
+          }
+        }
+      }
+      
+      const timeTaken = Date.now() - startTime;
+      updateTraversalInfo(sequence.join(' →'), {
+        nodesVisited: visited.size,
+        edgesUsed: Math.max(0, visited.size - 1),
+        totalWeight: 'N/A',
+        timeTaken: timeTaken + 'ms'
+      });
+      
+      draw({ visited });
+      logStep(`BFS complete – visited ${visited.size} nodes`, 'info');
+    });
+
+    // Prim's Minimum Spanning Tree
+    const runPrim = createGuardedAlgorithm(async () => {
+      currentAlgorithm = "Prim's MST";
+      logStep(`Starting Prim's MST from node ${startNode}`, 'info');
+      const nodeCount = graph.nodes.length;
+      if (nodeCount === 0) { logStep('Graph empty', 'info'); return; }
+      
+      const inMST = new Set([startNode]);
+      const mstEdges = new Set();
+      let sequence = [startNode.toString()];
+      let totalWeight = 0;
+      
+      currentTraversal.push(startNode);
+      updateTraversalOutput();
+      
+      while (inMST.size < nodeCount) {
+        let bestEdge = null;
+        let bestFrom = null;
+        let bestTo = null;
+        let minWeight = Infinity;
+        
+        // Find minimum weight edge from MST to non-MST node
+        for (const nodeId of inMST) {
+          for (const { to, weight, edge } of graph.getNeighbors(nodeId)) {
+            if (inMST.has(to)) continue;
+            
+            if (weight < minWeight) {
+              minWeight = weight;
+              bestEdge = edge;
+              bestFrom = nodeId;
+              bestTo = to;
+            }
+          }
+        }
+        
+        if (!bestEdge) {
+          logStep('Graph disconnected – cannot complete MST', 'reject');
+          break; // Disconnected graph
+        }
+        
+        logStep(`Selected edge ${formatEdge(bestEdge)} connecting MST to node ${bestTo} (weight ${minWeight})`, 'edge');
+        draw({
+          visited: inMST,
+          frontierEdges: new Set([bestEdge]),
+          goodEdges: mstEdges
+        });
+        await getAnimationDelay();
+        
+        // add to MST
+        inMST.add(bestTo);
+        mstEdges.add(bestEdge);
+        totalWeight += minWeight;
+        currentTraversal.push(bestTo);
+        sequence.push(bestTo.toString());
+        
+        logStep(`Added edge ${formatEdge(bestEdge)} to MST`, 'add');
+        draw({
+          visited: inMST,
+          goodEdges: mstEdges
+        });
+        updateTraversalOutput();
+        await getAnimationDelay();
+      }
+      
+      const timeTaken = Date.now() - startTime;
+      updateTraversalInfo(sequence.join(' →'), {
+        nodesVisited: inMST.size,
+        edgesUsed: mstEdges.size,
+        totalWeight: totalWeight,
+        timeTaken: timeTaken + 'ms'
+      });
+      
+      draw({
+        visited: new Set(graph.nodes.map(n => n.id)),
+        goodEdges: mstEdges
+      });
+      logStep(`Prim complete – MST weight ${totalWeight}`, 'info');
+    });
+
+    // Kruskal's Minimum Spanning Tree
+    const runKruskal = createGuardedAlgorithm(async () => {
+      currentAlgorithm = "Kruskal's MST";
+      logStep(`Starting Kruskal's MST`, 'info');
+      
+      // Union-Find data structure
+      const parent = {};
+      const rank = {};
+      
+      const find = (x) => {
+        if (parent[x] !== x) {
+          parent[x] = find(parent[x]);
+        }
+        return parent[x];
+      };
+      
+      const union = (a, b) => {
+        const rootA = find(a);
+        const rootB = find(b);
+        
+        if (rootA === rootB) return false;
+        
+        if (rank[rootA] < rank[rootB]) {
+          parent[rootA] = rootB;
+        } else if (rank[rootA] > rank[rootB]) {
+          parent[rootB] = rootA;
+        } else {
+          parent[rootB] = rootA;
+          rank[rootA]++;
+        }
+        return true;
+      };
+      
+      // Initialize Union-Find
+      for (const node of graph.nodes) {
+        parent[node.id] = node.id;
+        rank[node.id] = 0;
+      }
+      
+      // Sort edges by weight
+      const sortedEdges = [...graph.edges].sort((a, b) => a.w - b.w);
+      const mstEdges = new Set();
+      let sequence = [];
+      let totalWeight = 0;
+      
+      for (const edge of sortedEdges) {
+        const { u, v, w } = edge;
+        logStep(`Considering edge ${formatEdge(edge)}`, 'edge');
+        
+        // Preview edge
+        draw({
+          frontierEdges: new Set([edge]),
+          goodEdges: mstEdges
+        });
+        await getAnimationDelay();
+        
+        if (union(u, v)) {
+          mstEdges.add(edge);
+          totalWeight += w;
+          sequence.push(`${u}→${v}(${w})`);
+          currentTraversal.push(`${u}-${v}`);
+          
+          logStep(`Edge ${formatEdge(edge)} added to MST`, 'add');
+          draw({ goodEdges: mstEdges });
+          updateTraversalOutput();
+          await getAnimationDelay();
+        } else {
+          logStep(`Edge ${formatEdge(edge)} would form a cycle – rejected`, 'reject');
+          draw({
+            goodEdges: mstEdges,
+            badEdges: new Set([edge])
+          });
+          await getAnimationDelay();
+        }
+      }
+      
+      const timeTaken = Date.now() - startTime;
+      updateTraversalInfo(sequence.join(' →'), {
+        nodesVisited: graph.nodes.length,
+        edgesUsed: mstEdges.size,
+        totalWeight: totalWeight,
+        timeTaken: timeTaken + 'ms'
+      });
+      
+      draw({ goodEdges: mstEdges });
+      logStep(`Kruskal complete – MST weight ${totalWeight}`, 'info');
+    });
+
+    // Dijkstra's Shortest Path
+    const runDijkstra = createGuardedAlgorithm(async () => {
+      currentAlgorithm = "Dijkstra's Algorithm";
+      logStep(`Starting Dijkstra from node ${startNode}`, 'info');
+      const nodeCount = graph.nodes.length;
+      const distances = Array(nodeCount).fill(Infinity);
+      const visited = new Set();
+      const previous = Array(nodeCount).fill(null);
+      let sequence = [];
+      
+      distances[startNode] = 0;
+      
+      function getUnvisitedNodeWithMinDistance() {
+        let minNode = -1;
+        let minDistance = Infinity;
+        
+        for (let i = 0; i < nodeCount; i++) {
+          if (!visited.has(i) && distances[i] < minDistance) {
+            minDistance = distances[i];
+            minNode = i;
+          }
+        }
+        return minNode;
+      }
+      
+      while (true) {
+        const currentNode = getUnvisitedNodeWithMinDistance();
+        if (currentNode === -1) break;
+        
+        visited.add(currentNode);
+        currentTraversal.push(currentNode);
+        sequence.push(`${currentNode}(${distances[currentNode]})`);
+        logStep(`Select node ${currentNode} with distance ${distances[currentNode]}`, 'visit');
+        
+        drawWithDistances({
+          activeNode: currentNode,
+          visited,
+          previous,
+          distances
+        });
+        updateTraversalOutput();
+        await getAnimationDelay();
+        
+        for (const { to, weight, edge } of graph.getNeighbors(currentNode)) {
+          if (visited.has(to)) {
+            logStep(`Neighbor ${to} already finalized – skip`, 'info');
+            continue;
+          }
+          
+          const newDistance = distances[currentNode] + weight;
+          
+          logStep(`Check neighbor ${to} via ${formatEdge(edge)}: current ${distances[to]} new ${newDistance}`, 'edge');
+          drawWithDistances({
+            activeNode: currentNode,
+            visited,
+            previous,
+            distances,
+            frontierEdges: new Set([edge])
+          });
+          await getAnimationDelay();
+          
+          if (newDistance < distances[to]) {
+            distances[to] = newDistance;
+            previous[to] = { from: currentNode, edge };
+            logStep(`Updated distance of ${to} to ${newDistance} (via ${currentNode})`, 'add');
+            
+            drawWithDistances({
+              activeNode: currentNode,
+              visited,
+              previous,
+              distances
+            });
+            await getAnimationDelay();
+          } else {
+            logStep(`No improvement for ${to} (stay ${distances[to]})`, 'info');
+          }
+        }
+      }
+      
+      // Build shortest path tree
+      const shortestPathEdges = new Set();
+      for (let v = 0; v < nodeCount; v++) {
+        if (previous[v]) {
+          shortestPathEdges.add(previous[v].edge);
+        }
+      }
+      
+      const timeTaken = Date.now() - startTime;
+      updateTraversalInfo(sequence.join(' →'), {
+        nodesVisited: visited.size,
+        edgesUsed: shortestPathEdges.size,
+        totalWeight: 'Various',
+        timeTaken: timeTaken + 'ms'
+      });
+      
+      drawWithDistances({
+        goodEdges: shortestPathEdges,
+        distances,
+        previous
+      });
+      logStep(`Dijkstra complete – visited ${visited.size} nodes`, 'info');
+    });
+
+    function drawWithDistances(state) {
+      draw(state);
+      
+      // Overlay distance labels
+      const { distances = [] } = state;
+      ctx.save();
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'center';
+      
+      for (let i = 0; i < graph.nodes.length; i++) {
+        const node = graph.nodes[i];
+        const distance = distances[i];
+        const label = (distance === undefined || distance === Infinity) 
+          ? '∞' 
+          : Math.round(distance * 100) / 100;
+        
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText(label.toString(), node.x, node.y - 28);
+      }
+      
+      ctx.restore();
+    }
+
+    // ===== Random Graph Generation =====
+    function generateRandomGraph(nodeCount = 8, edgeProbability = 0.3, minWeight = 1, maxWeight = 20) {
+      const newGraph = new Graph();
+      
+      // Create nodes in a grid pattern with some randomness
+      const columns = Math.ceil(Math.sqrt(nodeCount));
+      const rows = Math.ceil(nodeCount / columns);
+      const cellWidth = canvas.width / (columns + 1);
+      const cellHeight = canvas.height / (rows + 1);
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const col = i % columns;
+        const row = Math.floor(i / columns);
+        
+        const x = (col + 1) * cellWidth + random(-cellWidth * 0.25, cellWidth * 0.25);
+        const y = (row + 1) * cellHeight + random(-cellHeight * 0.25, cellHeight * 0.25);
+        
+        newGraph.addNode(x, y);
+      }
+      
+      // Ensure connectivity with a random spanning tree
+      const nodeOrder = Array.from({ length: nodeCount }, (_, i) => i)
+        .sort(() => Math.random() - 0.5);
+      
+      for (let i = 1; i < nodeCount; i++) {
+        const u = nodeOrder[i];
+        const v = nodeOrder[Math.floor(random(0, i))];
+        const weight = Math.floor(random(minWeight, maxWeight + 1));
+        newGraph.addEdge(u, v, weight);
+      }
+      
+      // Add random edges based on probability
+      for (let u = 0; u < nodeCount; u++) {
+        for (let v = u + 1; v < nodeCount; v++) {
+          if (Math.random() < edgeProbability) {
+            const weight = Math.floor(random(minWeight, maxWeight + 1));
+            newGraph.addEdge(u, v, weight);
+          }
+        }
+      }
+      
+      return newGraph;
+    }
+
+    function relayoutGraph() {
+      // Simple force-directed layout algorithm
+      const iterations = 120;
+      const repulsiveForce = 12000;
+      const attractiveForce = 0.01;
+      const idealDistance = 200;
+      
+      for (let iter = 0; iter < iterations; iter++) {
+        const displacements = graph.nodes.map(() => ({ x: 0, y: 0 }));
+        
+        // Repulsive forces between all node pairs
+        for (let i = 0; i < graph.nodes.length; i++) {
+          for (let j = i + 1; j < graph.nodes.length; j++) {
+            const nodeA = graph.nodes[i];
+            const nodeB = graph.nodes[j];
+            
+            const dx = nodeA.x - nodeB.x;
+            const dy = nodeA.y - nodeB.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            
+            const force = repulsiveForce / (dist * dist);
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            
+            displacements[i].x += fx;
+            displacements[i].y += fy;
+            displacements[j].x -= fx;
+            displacements[j].y -= fy;
+          }
+        }
+        
+        // Attractive forces for connected nodes
+        for (const edge of graph.edges) {
+          const nodeA = graph.nodes[edge.u];
+          const nodeB = graph.nodes[edge.v];
+          
+          const dx = nodeA.x - nodeB.x;
+          const dy = nodeA.y - nodeB.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          
+          const force = attractiveForce * (dist - idealDistance);
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          
+          displacements[edge.u].x -= fx;
+          displacements[edge.u].y -= fy;
+          displacements[edge.v].x += fx;
+          displacements[edge.v].y += fy;
+        }
+        
+        // Apply displacements with damping
+        const damping = 0.02;
+        for (let i = 0; i < graph.nodes.length; i++) {
+          graph.nodes[i].x += displacements[i].x * damping;
+          graph.nodes[i].y += displacements[i].y * damping;
+        }
+        
+        graph.constrainNodesToBounds();
+      }
+    }
+
+    // ===== Event Handlers =====
+    document.getElementById('btnDFS').onclick = runDFS;
+    document.getElementById('btnBFS').onclick = runBFS;
+    document.getElementById('btnPrim').onclick = runPrim;
+    document.getElementById('btnKruskal').onclick = runKruskal;
+    document.getElementById('btnDijkstra').onclick = runDijkstra;
+    document.getElementById('btnClearHighlights').onclick = clearHighlights;
+    document.getElementById('btnClearLog').onclick = clearLog;
+
+    // Random graph controls
+    const probabilityInput = document.getElementById('rgProb');
+    const probabilityValue = document.getElementById('rgProbVal');
+    
+    probabilityInput.addEventListener('input', () => {
+      probabilityValue.textContent = Number(probabilityInput.value).toFixed(2);
+    });
+
+    document.getElementById('btnRandom').onclick = () => {
+      const nodeCount = Number(document.getElementById('rgNodes').value);
+      const probability = Number(document.getElementById('rgProb').value);
+      const minWeight = Number(document.getElementById('rgWmin').value);
+      const maxWeight = Number(document.getElementById('rgWmax').value);
+      
+      graph = generateRandomGraph(nodeCount, probability, minWeight, maxWeight);
+      startNode = 0;
+      updateStartNodeLabel();
+      currentTraversal = [];
+      updateTraversalOutput();
+      updateTraversalInfo('Click an algorithm to see traversal');
+      
+      relayoutGraph();
+      draw();
+      logStep(`Generated random graph: nodes=${nodeCount} p=${probability.toFixed(2)} w=[${minWeight}-${maxWeight}]`, 'info');
+    };
+
+    document.getElementById('btnResetLayout').onclick = () => {
+      relayoutGraph();
+      draw();
+      logStep('Re-layout performed', 'info');
+    };
+
+    // ===== Initialize Default Graph =====
+    function createDefaultGraph() {
+      graph = new Graph();
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 240;
+      const nodeCount = 8;
+      
+      // Create nodes in a circle
+      for (let i = 0; i < nodeCount; i++) {
+        const angle = (i / nodeCount) * Math.PI * 2;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        graph.addNode(x, y);
+      }
+      
+      // Add edges with weights
+      const edges = [
+        [0, 1, 4], [1, 2, 8], [2, 3, 7], [3, 4, 9], [4, 5, 10],
+        [5, 6, 2], [6, 7, 1], [7, 0, 8], [1, 7, 11], [2, 5, 4],
+        [3, 5, 14], [4, 6, 6], [0, 2, 5], [1, 3, 2]
+      ];
+      
+      for (const [u, v, weight] of edges) {
+        graph.addEdge(u, v, weight);
+      }
+      
+      startNode = 0;
+      updateStartNodeLabel();
+      updateTraversalInfo('Click an algorithm to see traversal');
+      logStep('Default graph created', 'info');
+    }
+
+    // Polyfill for older browsers
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radii) {
+        const radius = Array.isArray(radii) ? radii : [radii, radii, radii, radii];
+        this.beginPath();
+        this.moveTo(x + radius[0], y);
+        this.arcTo(x + width, y, x + width, y + height, radius[1]);
+        this.arcTo(x + width, y + height, x, y + height, radius[2]);
+        this.arcTo(x, y + height, x, y, radius[3]);
+        this.arcTo(x, y, x + width, y, radius[0]);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // Initialize and start
+    createDefaultGraph();
+    relayoutGraph();
+    draw();
+    updateTraversalOutput();
+
+  </script>
+</body>
+</html>
